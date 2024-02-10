@@ -167,7 +167,7 @@ GenerateProductOrderTmfPayload.prototype = {
      **/
     _generateAddPayloadForComposite: function(productOfferingGr, account) {
         var productOrderItem = [];
-        var productHierarchy = this.productHierarchyHelper.getMandatoryProductSpecificationsFromOffering(productOfferingGr);
+        var productHierarchy = this.productHierarchyHelper.getProductSpecificationsFromOffering(productOfferingGr);
 
         var location = "";
         var accountHasLocation = this.queryHelper.checkForRecords("cmn_location", "company=" + account);
@@ -302,13 +302,13 @@ GenerateProductOrderTmfPayload.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2024-02-09 23:33:54</sys_created_on>
         <sys_id>e036dd454718021029cb5ac5316d43d4</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>11</sys_mod_count>
         <sys_name>GenerateProductOrderTmfPayload</sys_name>
         <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
         <sys_policy/>
         <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
         <sys_update_name>sys_script_include_e036dd454718021029cb5ac5316d43d4</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2024-02-10 14:35:42</sys_updated_on>
+        <sys_updated_on>2024-02-10 15:00:26</sys_updated_on>
     </sys_script_include>
 </record_update>
