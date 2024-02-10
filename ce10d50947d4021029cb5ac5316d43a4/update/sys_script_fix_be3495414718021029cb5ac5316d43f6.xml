@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_fix">
+    <sys_script_fix action="INSERT_OR_UPDATE">
+        <before>false</before>
+        <description>Approves a list of orders as long as they are in a state of new</description>
+        <name>Approves a list of passed in orders</name>
+        <record_for_rollback>true</record_for_rollback>
+        <script><![CDATA[var ordersToApprove = "ORD0004116,ORD0004117,ORD0004118"; // Comma separated list of Order Numbers
+var approvedOrders = [];
+
+var ordersGr = new GlideRecord("sn_ind_tmt_orm_order");
+ordersGr.addQuery("number", "IN", ordersToApprove);
+ordersGr.addQuery("state", "new");
+ordersGr.query();
+while (ordersGr.next()){
+	ordersGr.setValue("state", "acknowledged");
+	ordersGr.update();
+	approvedOrders.push(ordersGr.getDisplayValue());
+}
+
+gs.info("The following orders were approved {0}", approvedOrders.toString());]]></script>
+        <sys_class_name>sys_script_fix</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:25:19</sys_created_on>
+        <sys_id>be3495414718021029cb5ac5316d43f6</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>Approves a list of passed in orders</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_fix_be3495414718021029cb5ac5316d43f6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:25:19</sys_updated_on>
+        <unloadable>false</unloadable>
+    </sys_script_fix>
+</record_update>

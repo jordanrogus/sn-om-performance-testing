@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_648117_order_man.GenerateProductOrderTmfPayload</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Functions to support creating TMF-compliant payloads</description>
+        <name>GenerateProductOrderTmfPayload</name>
+        <script><![CDATA[var GenerateProductOrderTmfPayload = Class.create();
+GenerateProductOrderTmfPayload.prototype = {
+    initialize: function() {
+        this.queryHelper = new x_648117_order_man.QueryHelper();
+        this.tmfPayloadHelper = new x_648117_order_man.TmfPayloadHelper();
+        this.dataGeneration = new x_648117_order_man.DataGeneration();
+        this.productHierarchyHelper = new x_648117_order_man.ProductHierarchyHelper();
+    },
+
+    /** Generate a tmf-compliant product order payload for ordering a new offering
+     * 
+     * @param {string} productOffering - Product offering as sys_id
+     * @param {string} extId - External ID to pass to orders
+     * @returns {string} payload - Stringified tmf-compliant product order payload
+     **/
+    generatePostPayloadForAdd: function(productOffering, extId) {
+        var payload = {};
+		try {
+            var account = this.tmfPayloadHelper.getRandomValidAccount();
+            if (!account) {
+                return null;
+            }
+
+            var contact = this.tmfPayloadHelper.getRandomContactFromAccount(account);
+            if (!contact) {
+                return null;
+            }
+
+            var externalId = "";
+            if (extId) {
+                externalId = extId;
+            }
+            var orderCurrency = gs.getProperty("x_648117_order_man.default_order_currency");
+            var note = [{
+                    "text": "This is the first note"
+                },
+                {
+                    "text": "This is the second note"
+                }
+            ];
+
+            var productOrderItem = this._generateAddProductOrderItem(productOffering, account);
+            if (!productOrderItem) {
+                return null;
+            }
+
+            var relatedParty = this.tmfPayloadHelper.generateRelatedParty(account, contact);
+            if (!relatedParty) {
+                return null;
+            }
+
+            payload = {
+                externalId,
+                orderCurrency,
+                note,
+                productOrderItem,
+                relatedParty
+            };
+			gs.info(gs.getMessage("Payload submitted: {0}"), JSON.stringify(payload));
+        } catch (err) {
+			gs.error(gs.getMessage("Error creating payload for product offering {0}, error: {1}", [productOffering, err]));
+        }
+        return JSON.stringify(payload);
+    },
+
+    /** Generate a tmf-compliant product order item object
+     * 
+     * @param {string} productOffering - Product offering as sys_id
+     * @param {string} account - Account as sys_id
+     * @returns {Array.<object>} payload - Stringified tmf-compliant product order item object in an array
+     **/
+    _generateAddProductOrderItem: function(productOffering, account) {
+        var productOfferingGr = this.queryHelper.getGlideRecordFromSysId("sn_prd_pm_product_offering", productOffering);
+
+        // Not TMF-compliant product offering
+        if (productOfferingGr.product_specification.nil()) {
+            return null;
+        }
+
+        var productSpecificationGr = this.queryHelper.getGlideRecordFromSysId("sn_prd_pm_product_specification", productOfferingGr.getValue("product_specification"));
+        var isCompositeProductSpec = productSpecificationGr.getValue("is_composite");
+        if (isCompositeProductSpec === "1") { // Yes a composite spec
+            return this._generateAddPayloadForComposite(productOfferingGr, account);
+        } else {
+            return this._generateAddPayloadForSimple(productOfferingGr, productSpecificationGr, account);
+        }
+    },
+
+    /** Generate a tmf-compliant product order item object for a simple offering
+     * 
+     * @param {object} productOfferingGr - Product offering as GlideRecord object
+     * @param {object} productSpecificationGr - Product specification as GlideRecord object
+     * @param {string} account - Account as sys_id
+     * @returns {Array.<object>} payload - Stringified tmf-compliant product order item object in an array
+     **/
+    _generateAddPayloadForSimple: function(productOfferingGr, productSpecificationGr, account) {
+        var productOfferingSysId = productOfferingGr.getUniqueValue();
+        var productSpecificationSysId = productSpecificationGr.getUniqueValue();
+
+        var id = gs.generateGUID();
+        var quantity = this.dataGeneration.generateInt(1, 3);
+        var action = "add";
+        var product = {
+            "isBundle": false,
+            "@type": "Product",
+            "productSpecification": {
+                "id": productSpecificationGr.getValue("initial_version"),
+                "name": productSpecificationGr.getValue("name"),
+                "internalVersion": productSpecificationGr.getValue("version"),
+                "@type": "ProductSpecificationRef"
+            },
+            "relatedParty": [{
+                "firstName": this.dataGeneration.generateRandomTextString(5),
+                "lastName": this.dataGeneration.generateRandomTextString(5),
+                "email": this.dataGeneration.generateRandomTextString(10) + "@email.com",
+                "phone": "+1" + this.dataGeneration.generatePhoneNumber(),
+                "@type": "RelatedParty",
+                "@referredType": "OrderLineItemContact"
+            }]
+        };
+
+        var mandatoryCharacteristics = this.queryHelper.checkForRecords("sn_prd_pm_product_offering_characteristic", "product_offering=" + productOfferingSysId + "^specification=" + productSpecificationSysId + "^is_mandatory=true^ORis_customer_input_required=true");
+        if (mandatoryCharacteristics) {
+            product["productCharacteristic"] = this.tmfPayloadHelper.generateProductCharacteristics(productOfferingSysId, productSpecificationSysId);
+        }
+
+        var accountHasLocation = this.queryHelper.checkForRecords("cmn_location", "company=" + account);
+        if (accountHasLocation) {
+            product["place"] = {
+                "@type": "Place",
+                "id": this.tmfPayloadHelper.getRandomAccountLocation(account)
+            };
+        }
+
+        var productOffering = {
+            "id": productOfferingGr.getValue("initial_version"),
+            "name": productOfferingGr.getValue("name"),
+            "internalVersion": productOfferingGr.getValue("version")
+        };
+
+        var payload = {
+            id,
+            quantity,
+            action,
+            product,
+            productOffering
+        };
+        payload["@type"] = "ProductOrderItem";
+
+        return [payload];
+    },
+
+    /** Generate a tmf-compliant product order item array of objects for a complex offering
+     * 
+     * @param {object} productOfferingGr - Product offering as GlideRecord object
+     * @param {string} account - Account as sys_id
+     * @returns {Array.<object>} payload - Stringified tmf-compliant product order item objects in an array
+     **/
+    _generateAddPayloadForComposite: function(productOfferingGr, account) {
+        var productOrderItem = [];
+        var productHierarchy = this.productHierarchyHelper.getMandatoryProductSpecificationsFromOffering(productOfferingGr);
+
+        var location = "";
+        var accountHasLocation = this.queryHelper.checkForRecords("cmn_location", "company=" + account);
+        if (accountHasLocation) {
+            location = this.tmfPayloadHelper.getRandomAccountLocation(account);
+        }
+
+        for (item in productHierarchy) {
+            var relationshipObj = productHierarchy[item];
+            var productSpecificationGr;
+            var productOrderObj = {};
+            var parentProductSpec = "";
+            var childrenProductSpecs = [];
+
+            if (relationshipObj["target"] == null) {
+                productSpecificationGr = this.queryHelper.getGlideRecordFromSysId("sn_prd_pm_product_specification", relationshipObj["source"]);
+
+                // Get all children (No parent as source spec)
+                childrenProductSpecs = productHierarchy.filter(function(el) {
+                    return el["source"] == relationshipObj["source"];
+                });
+
+                productOrderObj = this._generateAddProductOrderItemObjForComposite(productOfferingGr, productSpecificationGr, location, parentProductSpec, childrenProductSpecs);
+            } else {
+                productSpecificationGr = this.queryHelper.getGlideRecordFromSysId("sn_prd_pm_product_specification", relationshipObj["target"]);
+
+                // Get parent and all children
+                parentProductSpec = relationshipObj["source"];
+                childrenProductSpecs = productHierarchy.filter(function(el) {
+                    return el["source"] == relationshipObj["target"];
+                });
+
+                productOrderObj = this._generateAddProductOrderItemObjForComposite(productOfferingGr, productSpecificationGr, location, parentProductSpec, childrenProductSpecs);
+            }
+            if (productOrderObj) {
+                productOrderItem.push(productOrderObj);
+            }
+        }
+        return productOrderItem;
+    },
+
+    /** Generate a tmf-compliant product order item object for a complex offering
+     * 
+     * @param {object} productOfferingGr - Product offering as GlideRecord object
+     * @param {object} productSpecificationGr - Product specification as GlideRecord object
+     * @param {string} location - Location as sys_id
+     * @param {string} parentProductSpec - Parent specification for this product
+     * @param {Array.<Object>} childrenProductSpecs - Array of child specification objects (source/target/mandatory) for this product
+     * @returns {object} payload - TMF-compliant product order item object
+     **/
+    _generateAddProductOrderItemObjForComposite: function(productOfferingGr, productSpecificationGr, location, parentProductSpec, childrenProductSpecs) {
+        var productOfferingSysId = productOfferingGr.getUniqueValue();
+        var productSpecificationSysId = productSpecificationGr.getUniqueValue();
+
+        var id = productSpecificationSysId; // ID must be known as it is used in product parent/child relationships so utilizing specId
+        var quantity = 1; // Assume quantity of 1 for composite POs
+        var action = "add";
+        var product = {
+            "isBundle": false,
+            "@type": "Product",
+            "productSpecification": {
+                "id": productSpecificationGr.getValue("initial_version"),
+                "name": productSpecificationGr.getValue("name"),
+                "internalVersion": productSpecificationGr.getValue("version"),
+                "@type": "ProductSpecificationRef"
+            },
+            "relatedParty": [{
+                "firstName": this.dataGeneration.generateRandomTextString(5),
+                "lastName": this.dataGeneration.generateRandomTextString(5),
+                "email": this.dataGeneration.generateRandomTextString(10) + "@email.com",
+                "phone": "+1" + this.dataGeneration.generatePhoneNumber(),
+                "@type": "RelatedParty",
+                "@referredType": "OrderLineItemContact"
+            }]
+        };
+
+        var mandatoryCharacteristics = this.queryHelper.checkForRecords("sn_prd_pm_product_offering_characteristic", "product_offering=" + productOfferingSysId + "^specification=" + productSpecificationSysId + "^is_mandatory=true^ORis_customer_input_required=true");
+        if (mandatoryCharacteristics) {
+            product["productCharacteristic"] = this.tmfPayloadHelper.generateProductCharacteristics(productOfferingSysId, productSpecificationSysId);
+        }
+
+        if (location) {
+            product["place"] = {
+                "@type": "Place",
+                "id": location
+            };
+        }
+
+        var productOffering = {
+            "id": productOfferingGr.getValue("initial_version"),
+            "name": productOfferingGr.getValue("name"),
+            "internalVersion": productOfferingGr.getValue("version")
+        };
+
+        var payload = {
+            id,
+            quantity,
+            action,
+            product,
+            productOffering
+        };
+
+        if (parentProductSpec || childrenProductSpecs.length > 0) {
+            var productOrderItemRelationship = [];
+            if (parentProductSpec) {
+                productOrderItemRelationship.push({
+                    "id": parentProductSpec,
+                    "relationshipType": "HasParent"
+                });
+            }
+            if (childrenProductSpecs.length > 0) {
+                for (item in childrenProductSpecs) {
+                    var childSpec = childrenProductSpecs[item]["target"];
+                    if (childSpec) {
+                        productOrderItemRelationship.push({
+                            "id": childSpec,
+                            "relationshipType": "HasChild"
+                        });
+                    }
+
+                }
+            }
+            payload["productOrderItemRelationship"] = productOrderItemRelationship;
+        }
+        payload["@type"] = "ProductOrderItem";
+        return payload;
+    },
+
+    type: 'GenerateProductOrderTmfPayload'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:33:54</sys_created_on>
+        <sys_id>e036dd454718021029cb5ac5316d43d4</sys_id>
+        <sys_mod_count>9</sys_mod_count>
+        <sys_name>GenerateProductOrderTmfPayload</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_include_e036dd454718021029cb5ac5316d43d4</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-10 00:01:12</sys_updated_on>
+    </sys_script_include>
+</record_update>

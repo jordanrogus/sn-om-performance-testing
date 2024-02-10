@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element db_object_id="62909dc947d4021029cb5ac5316d433a" label="Custom Payload" max_length="40" name="x_648117_order_man_custom_payload" type="collection">
+        <element label="API" mandatory="true" max_length="32" name="api" reference="sys_ws_operation" reference_qual="active=true^web_service_definition.active=true^web_service_definition=f12b67d04f930110c5ff2624b2ce0b43^name=Create Order^EQ" reference_qual_condition="active=true^web_service_definition.active=true^web_service_definition=f12b67d04f930110c5ff2624b2ce0b43^name=Create Order^EQ" type="reference"/>
+        <element label="Async Order Processing" max_length="40" name="async_order_processing" type="boolean"/>
+        <element label="Description" max_length="1000" name="description" type="string"/>
+        <element default="1" label="Number of Individual API Calls" mandatory="true" max_length="40" name="number_of_individual_api_calls" type="integer"/>
+        <element label="Payload" mandatory="true" max_length="16000" name="payload" type="string"/>
+        <element display="true" label="Title" mandatory="true" max_length="100" name="title" type="string"/>
+        <index name="index">
+            <element name="api"/>
+        </index>
+    </element>
+</database>

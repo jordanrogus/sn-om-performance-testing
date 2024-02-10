@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties_category_m2m">
+    <sys_properties_category_m2m action="INSERT_OR_UPDATE">
+        <category display_value="OM Perf Application Properties">bf1315014718021029cb5ac5316d43ba</category>
+        <order>100</order>
+        <property display_value="x_648117_order_man.basic_auth_config" name="x_648117_order_man.basic_auth_config">d05359014718021029cb5ac5316d43b3</property>
+        <sys_class_name>sys_properties_category_m2m</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:25:00</sys_created_on>
+        <sys_id>1a24d9414718021029cb5ac5316d4307</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_648117_order_man.basic_auth_config.OM Perf Application Properties</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_properties_category_m2m_1a24d9414718021029cb5ac5316d4307</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:25:00</sys_updated_on>
+    </sys_properties_category_m2m>
+</record_update>

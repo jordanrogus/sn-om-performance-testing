@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_648117_order_man.TmfPayloadHelper</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Functions to support generating TMF payloads</description>
+        <name>TmfPayloadHelper</name>
+        <script><![CDATA[var TmfPayloadHelper = Class.create();
+TmfPayloadHelper.prototype = {
+    initialize: function() {
+        this.dataGeneration = new x_648117_order_man.DataGeneration();
+        this.queryHelper = new x_648117_order_man.QueryHelper();
+    },
+
+    /** Get a random published product offering
+     * 
+     * @returns {string} - Product offering sys_id
+     **/
+    getRandomValidOffering: function() {
+        var validOfferings = [];
+        var offeringGr = new GlideRecord("sn_prd_pm_product_offering");
+        offeringGr.addEncodedQuery("status=published^product_specification.status=published"); 
+        offeringGr.query();
+        while (offeringGr.next()) {
+            validOfferings.push(offeringGr.getUniqueValue());
+        }
+
+        if (validOfferings.length > 0) {
+            return validOfferings[Math.floor(Math.random() * validOfferings.length)];
+        }
+        return null;
+    },
+
+    /** Get a random account that has an associated contact
+     * 
+     * @returns {string} - Account sys_id
+     **/
+    getRandomValidAccount: function() {
+        var validAccounts = [];
+        var accountGr = new GlideRecord("customer_account");
+        accountGr.addEncodedQuery("^RLQUERYcustomer_contact.account,>=1^ENDRLQUERY"); // Ensure valid per TMF
+        accountGr.query();
+        while (accountGr.next()) {
+            validAccounts.push(accountGr.getUniqueValue());
+        }
+
+        if (validAccounts.length > 0) {
+            return validAccounts[Math.floor(Math.random() * validAccounts.length)];
+        }
+        return null;
+    },
+
+    /** Get a random contact from an account
+     * 
+     * @param {string} account - Account as sys_id
+     * @returns {string} - Contact sys_id
+     **/
+    getRandomContactFromAccount: function(account) {
+        var validContacts = [];
+        var contactGr = new GlideRecord("customer_contact");
+        contactGr.addQuery("account", account);
+        contactGr.query();
+        while (contactGr.next()) {
+            validContacts.push(contactGr.getUniqueValue());
+        }
+
+        if (validContacts.length > 0) {
+            return validContacts[Math.floor(Math.random() * validContacts.length)];
+        }
+        return null;
+    },
+
+    /** Get a random location from an account
+     * 
+     * @param {string} account - Account as sys_id
+     * @returns {string} - Location sys_id
+     **/
+    getRandomAccountLocation: function(account) {
+        var validLocations = [];
+        var locationGr = new GlideRecord("cmn_location");
+        locationGr.addQuery("company", account);
+        locationGr.query();
+        while (locationGr.next()) {
+            validLocations.push(locationGr.getUniqueValue());
+        }
+
+        if (validLocations.length > 0) {
+            return validLocations[Math.floor(Math.random() * validLocations.length)];
+        }
+        return null;
+    },
+
+    /** Generates a tmf-compliant related party array
+     * 
+     * @param {string} account - Account as sys_id
+     * @param {string} contact - Contact as sys_id
+     * @returns {Array.<object>} - Array with an account/contact object in the tmf standard
+     **/
+    generateRelatedParty: function(account, contact) {
+        var accountGr = this.queryHelper.getGlideRecordFromSysId("customer_account", account);
+        var contactGr = this.queryHelper.getGlideRecordFromSysId("customer_contact", contact);
+
+        return [{
+                "id": contactGr.getUniqueValue(),
+                "name": contactGr.getValue("name"),
+                "@type": "RelatedParty",
+                "@referredType": "CustomerContact"
+            },
+            {
+                "id": accountGr.getUniqueValue(),
+                "name": accountGr.getValue("name"),
+                "@type": "RelatedParty",
+                "@referredType": "Customer"
+            }
+        ];
+    },
+
+    /** Generates a tmf-compliant product characteristic array
+     * 
+     * @param {string} productOffering - Product offering as sys_id
+     * @param {string} productSpecification - Product specification as sys_id
+     * @returns {Array.<object>} - Array with mandatory product characteristics as an object (name/value)
+     **/
+    generateProductCharacteristics: function(productOffering, productSpecification) {
+        var characteristicArray = [];
+        var characteristicGr = this.queryHelper.getRecords("sn_prd_pm_product_offering_characteristic", "product_offering=" + productOffering + "^specification=" + productSpecification + "^is_mandatory=true^ORis_customer_input_required=true");
+        if (!characteristicGr) {
+            return characteristicArray;
+        }
+        while (characteristicGr.next()) {
+            var characteristic = characteristicGr.getValue("characteristic");
+            var characteristicType = characteristicGr.getElement("characteristic.input_type").toString();
+            var characteristicName = characteristicGr.getElement("characteristic.name").toString();
+
+            if (Constants.CHARACTERISTIC_CHOICE_TYPES.indexOf(characteristicType) > -1) {
+
+                // Ensure no duplicate characteristics
+                var dupFound = false;
+                characteristicArray.forEach(function(obj) {
+                    if (obj.name === characteristicName) {
+                        dupFound = true;
+                    }
+                });
+                if (!dupFound) {
+                    characteristicArray.push({
+                        "name": characteristicName,
+                        "value": this.getRandomCharacteristicOption(productOffering, productSpecification, characteristic)
+                    });
+                }
+            } else {
+				var charsRequiringNumericData = gs.getProperty("x_648117_order_man.characteristic_names_requiring_numeric_test_data");
+				var charsRequiringNumericDataArr = charsRequiringNumericData.split(",");
+
+                if (charsRequiringNumericDataArr.indexOf(characteristicName) > -1) {
+					characteristicArray.push({
+                        "name": characteristicName,
+                        "value": this.dataGeneration.generateInt(1,9)
+                    });
+                } else {
+                    characteristicArray.push({
+                        "name": characteristicName,
+                        "value": this.dataGeneration.generateRandomTextString(10)
+                    });
+                }
+            }
+        }
+        return characteristicArray;
+    },
+
+    /** Gets a valid random characteristic option for a product offering characteristic
+     * 
+     * @param {string} productOffering - Product offering as sys_id
+     * @param {string} productSpecification - Product specification as sys_id
+     * @param {string} characteristic - Characteristic as sys_id
+     * @returns {string} - Valid characteristic value from the available options
+     **/
+    getRandomCharacteristicOption: function(productOffering, productSpecification, characteristic) {
+        var validOptions = [];
+        var prdOfferingCharacteristicGr = new GlideRecord("sn_prd_pm_product_offering_characteristic");
+        prdOfferingCharacteristicGr.addQuery("product_offering", productOffering);
+        prdOfferingCharacteristicGr.addQuery("specification", productSpecification);
+        prdOfferingCharacteristicGr.addQuery("characteristic", characteristic);
+        prdOfferingCharacteristicGr.query();
+        while (prdOfferingCharacteristicGr.next()) {
+            validOptions.push(prdOfferingCharacteristicGr.getElement("characteristic_option.option").toString());
+        }
+
+        if (validOptions.length > 0) {
+            return validOptions[Math.floor(Math.random() * validOptions.length)];
+        }
+        return null;
+    },
+
+    type: 'TmfPayloadHelper'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:33:42</sys_created_on>
+        <sys_id>3d269d454718021029cb5ac5316d43d8</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>TmfPayloadHelper</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_include_3d269d454718021029cb5ac5316d43d8</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:51:28</sys_updated_on>
+    </sys_script_include>
+</record_update>

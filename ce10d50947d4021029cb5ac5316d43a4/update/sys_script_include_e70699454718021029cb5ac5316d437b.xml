@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_648117_order_man.ProductHierarchyHelper</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Functions to support retrieving a product hierarchy</description>
+        <name>ProductHierarchyHelper</name>
+        <script><![CDATA[var ProductHierarchyHelper = Class.create();
+ProductHierarchyHelper.prototype = {
+    initialize: function() {
+		this.queryHelper = new x_648117_order_man.QueryHelper();
+	},
+
+    /**
+     * Retrieves all mandatory product specifications from a product offering
+     * 
+     * @param {GlideRecord Object} productOfferingGr - Product Offering
+     * @returns {string} - Array of objects with specification relationship data for: source/target/mandatory
+     **/
+    getMandatoryProductSpecificationsFromOffering(productOfferingGr) {
+        var topProductSpecification = productOfferingGr.getValue('product_specification');
+        var topProductSpecificationObj = {
+            "source": topProductSpecification,
+            "target": null,
+            "mandatory": true
+        };
+        var entireHierarchyArr = this.getAllSpecificationsInHierarchy(topProductSpecification, [topProductSpecificationObj]);
+        var productHierarchyArr = this._filterForMandatoryProducts(entireHierarchyArr);
+        return productHierarchyArr;
+    },
+
+    /**
+     * Retrieves all child specifications from a passed in parent 
+     * 
+     * @param {string} specificationSysId - Spec to query for children
+     * @param {Array} array - Array to update with objects
+     * @returns {Array} - Array of objects with specification relationship data for: source/target/mandatory
+     **/
+    getAllSpecificationsInHierarchy(specificationSysId, array) {
+        var specRelationshipGr = new GlideRecord("sn_prd_pm_specification_relationship");
+        specRelationshipGr.addNotNullQuery("source");
+        specRelationshipGr.addNotNullQuery("target");
+        specRelationshipGr.addQuery("source", specificationSysId);
+        specRelationshipGr.query();
+        while (specRelationshipGr.next()) {
+            var specificationTarget = specRelationshipGr.getValue('target');
+			array.push({
+                "source": specRelationshipGr.getValue('source'),
+                "target": specRelationshipGr.getValue('target'),
+                "mandatory": specRelationshipGr.getValue('is_mandatory') === "1" ? true : false
+            });
+            this.getAllSpecificationsInHierarchy(specificationTarget, array);
+        }
+        return array;
+    },
+
+    /**
+     * Filters an array of objects containing specification relationship data for mandatory products only
+     * 
+     * @param {Array} specifications - Array of specifications to filter
+     * @returns {Array} - Array of filtered specification objects containing specification relationship data for: source/target/mandatory
+     **/
+    _filterForMandatoryProducts(specifications) {
+        var productSpecifications = [];
+		for (item in specifications){
+			var specification = specifications[item];
+			if (!specification["mandatory"]){
+				continue;
+			}
+			if (!specification["target"]){ // If no target it is the root and is a product spec
+				productSpecifications.push(specification);
+			}
+			var targetSpec = specification["target"];
+			if (this.queryHelper.checkForRecords("sn_prd_pm_product_specification", "sys_id=" + targetSpec)){
+				productSpecifications.push(specification);
+			}
+		}
+        return productSpecifications;
+    },
+
+    type: 'ProductHierarchyHelper'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:33:17</sys_created_on>
+        <sys_id>e70699454718021029cb5ac5316d437b</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>ProductHierarchyHelper</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_include_e70699454718021029cb5ac5316d437b</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:41:14</sys_updated_on>
+    </sys_script_include>
+</record_update>

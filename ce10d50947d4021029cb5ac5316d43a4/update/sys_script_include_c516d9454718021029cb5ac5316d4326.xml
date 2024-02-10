@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_648117_order_man.QueryHelper</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Functions to support querying data</description>
+        <name>QueryHelper</name>
+        <script><![CDATA[var QueryHelper = Class.create();
+QueryHelper.prototype = {
+    initialize: function() {},
+
+    /**
+     * Retrieves a record from a table as a GlideRecord object
+     * 
+     * @param {string} tableName - Table to query
+     * @param {string} sysId - Record sys_id to query
+     * @returns {?GlideRecord object} - The retrieved record as a GlideRecord object or null if invalid inputs or record not found
+     **/
+    getGlideRecordFromSysId: function(tableName, sysId) {
+        if (!gs.tableExists(tableName) || typeof(sysId) !== "string") {
+            return null;
+        }
+
+        var recordGr = new GlideRecord(tableName);
+        if (recordGr.get(sysId)) {
+            return recordGr;
+        }
+        return null;
+    },
+
+    /**
+     * Checks if records exist in table from a query
+     * 
+     * @param {string} tableName - Table to query
+     * @param {string} encodedQuery - Encoded query to use for check
+     * @returns {?boolean} - If the query against the table returned any records. Null if the table does not exist or the query is invalid
+     **/
+    checkForRecords: function(tableName, encodedQuery) {
+        if (!gs.tableExists(tableName)) {
+            return null;
+        }
+
+        var recordsGr = new GlideRecord(tableName);
+        if (recordsGr.isEncodedQueryValid(encodedQuery)) {
+            recordsGr.addEncodedQuery(encodedQuery);
+        } else {
+            return null;
+        }
+        recordsGr.setLimit(1);
+        recordsGr.query();
+        return recordsGr.hasNext();
+    },
+
+	/**
+     * Retrieves table records form a query
+     * 
+     * @param {string} tableName - Table to query
+     * @param {string} encodedQuery - Encoded query to use for check
+     * @returns {?GlideRecord Object} - Returned records as a GlideRecord object
+     **/
+    getRecords(tableName, encodedQuery) {
+        if (!gs.tableExists(tableName) || typeof(encodedQuery) !== "string") {
+            return null;
+        }
+
+        var recordsGr = new GlideRecord(tableName);
+        if (recordsGr.isEncodedQueryValid(encodedQuery)) {
+            recordsGr.addEncodedQuery(encodedQuery);
+        } else {
+            return null;
+        }
+
+        recordsGr.query();
+        if (recordsGr.hasNext()) {
+            return recordsGr;
+        } else {
+            return null;
+        }
+    },
+
+    type: 'QueryHelper'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:33:23</sys_created_on>
+        <sys_id>c516d9454718021029cb5ac5316d4326</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>QueryHelper</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_include_c516d9454718021029cb5ac5316d4326</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:33:23</sys_updated_on>
+    </sys_script_include>
+</record_update>

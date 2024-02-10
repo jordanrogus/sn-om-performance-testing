@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_648117_order_man.RunCustomPayload</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description>Functions to support running a custom payload through the API</description>
+        <name>RunCustomPayload</name>
+        <script><![CDATA[var RunCustomPayload = Class.create();
+RunCustomPayload.prototype = {
+    initialize: function() {
+        this.submitApi = new x_648117_order_man.SubmitApi();
+    },
+
+    /** Runs an API from a custom payload
+	 * NOTE: Logic in responses is geared towards orders, and if expanded should be updated
+     * 
+     * @param {string} payload - Stringified payload
+	 * @param {GlideRecord object} apiGr - API to run as a scripted rest resource
+     * @param {integer} apiCalls - Number of orders to generate
+	 * @param {Array.<object>} queryParams - Array of objects (name/value) for query params to use
+     * @returns null
+     **/
+    runApiForCustomPayload: function(payload, apiGr, apiCalls, queryParams) {
+        if (!Number.isInteger(apiCalls)) {
+            apiCalls = 1;
+        }
+        if (!Array.isArray(queryParams)) {
+            queryParams = [];
+        }
+
+        var asyncMax = parseInt(gs.getProperty("x_648117_order_man.number_of_api_calls_before_async"));
+        var apiMax = parseInt(gs.getProperty("x_648117_order_man.max_api_calls"));
+
+        var apiEndpoint = apiGr.getValue("operation_uri").substring(1);
+		var apiHttpMethod = apiGr.getValue("http_method");
+
+        var id = "";
+        var url = "";
+        var link = "";
+        var error_msg = "";
+        var msg = "";
+
+        // Ensure async max is less than or equal to api max
+        if (asyncMax > apiMax) {
+            asyncMax = apiMax;
+        }
+
+        // Ensure the number of requested calls cannot exceed the api max
+        if (apiCalls > apiMax) {
+            apiCalls = apiMax;
+        }
+
+        if (apiCalls < asyncMax) {
+            for (var syncQty = 0; syncQty < apiCalls; syncQty++) {
+                var responseObj = this.submitApi.submitAgainstProductOrderApiSync(payload, apiEndpoint, apiHttpMethod, queryParams);
+                var statusCode = parseInt(responseObj.statusCode);
+                var responseBody = JSON.parse(responseObj.responseBody);
+
+                if (statusCode === 201) {
+                    id = responseBody.id.toString();
+                    url = "/sn_ind_tmt_orm_order?sys_id=" + id;
+                    link = '<a href="' + url + '" target="_blank">Click Here!</a>';
+                    msg = gs.getMessage("Order was generated. Link in a new tab: {0}", link);
+                    gs.addInfoMessage(msg);
+                    gs.info(msg);
+                } else if (statusCode === 202) {
+                    id = responseBody.orderId.toString();
+                    msg = gs.getMessage("Order was generated with a status of 202. The id of the order is: {0}", id);
+                    gs.addInfoMessage(msg);
+                    gs.info(msg);
+                } else if (responseBody.hasOwnProperty('details')) {
+                    error_msg = JSON.stringify(responseBody.details);
+                    msg = gs.getMessage("The API encountered the following error: {0}", error_msg);
+                    gs.addErrorMessage(msg);
+                    gs.error(msg);
+                } else {
+                    msg = gs.getMessage("There was an error with the API. Please contact an admin to troubleshoot");
+                    gs.addErrorMessage(msg);
+                    gs.error(msg);
+                }
+            }
+        } else {
+            for (var asyncQty = 0; asyncQty < apiCalls; asyncQty++) {
+                this.submitApi.submitAgainstProductOrderApiAsync(payload, apiEndpoint, apiHttpMethod, queryParams);
+            }
+            url = "/sn_ind_tmt_orm_order_list.do";
+            link = '<a href="' + url + '" target="_blank">Click Here!</a>';
+            msg = gs.getMessage("The {0} API requests submitted are being run asynchronously. To review the orders in a new tab: {1}", [apiCalls.toFixed(), link]);
+            gs.addInfoMessage(msg);
+            gs.info(gs.getMessage("The {0} API requests submitted are being run asynchronously", apiCalls.toFixed()));
+        }
+    },
+
+    type: 'RunCustomPayload'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:33:29</sys_created_on>
+        <sys_id>aa161d454718021029cb5ac5316d4368</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>RunCustomPayload</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_script_include_aa161d454718021029cb5ac5316d4368</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:41:52</sys_updated_on>
+    </sys_script_include>
+</record_update>

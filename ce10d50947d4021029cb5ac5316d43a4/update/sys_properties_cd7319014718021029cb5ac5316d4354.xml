@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>Comma separated list of characteristic names requiring numeric test data</description>
+        <ignore_cache>true</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_648117_order_man.characteristic_names_requiring_numeric_test_data</name>
+        <read_roles>x_equi2_om_perf.admin</read_roles>
+        <suffix>characteristic_names_requiring_numeric_test_data</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:22:27</sys_created_on>
+        <sys_id>cd7319014718021029cb5ac5316d4354</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>x_648117_order_man.characteristic_names_requiring_numeric_test_data</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_properties_cd7319014718021029cb5ac5316d4354</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-10 00:07:02</sys_updated_on>
+        <type>string</type>
+        <value>CPE Id</value>
+        <write_roles>x_equi2_om_perf.admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=cd7319014718021029cb5ac5316d4354"/>
+</record_update>

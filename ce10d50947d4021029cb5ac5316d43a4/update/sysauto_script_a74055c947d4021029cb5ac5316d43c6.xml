@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <business_calendar/>
+        <condition><![CDATA[var answer = false;
+var isSubProd = (gs.getProperty("sn_appclient.instance_type") == "subproduction");
+
+var now = new GlideDateTime();
+var dayOfWeek = now.getDayOfWeekLocalTime();
+if (dayOfWeek != 6 && dayOfWeek != 7 && isSubProd) {
+    answer = true;
+}
+answer;]]></condition>
+        <conditional>true</conditional>
+        <entered_time>1970-01-01 00:00:00</entered_time>
+        <max_drift/>
+        <name>Generate Orders for Performance Testing</name>
+        <offset/>
+        <offset_type>0</offset_type>
+        <run_as display_value="Jordan Rogus">6816f79cc0a8016401c5a33be04be441</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-01 00:05:00</run_period>
+        <run_start>2024-02-05 21:21:56</run_start>
+        <run_time>1970-01-01 07:00:00</run_time>
+        <run_type>periodically</run_type>
+        <script><![CDATA[var generateProductOrders = new x_648117_order_man.GenerateProductOrder();
+var dataGeneration = new x_648117_order_man.DataGeneration();
+var queryHelper = new x_648117_order_man.QueryHelper();
+var tmfPayloadHelper = new x_648117_order_man.TmfPayloadHelper();
+
+var quantityOfOrders = dataGeneration.generateInt(1,10);
+
+// Orders asynch if > 5 submitted
+var queryParams = [];
+var asyncProcessing = false;
+if (quantityOfOrders >= 5){
+    queryParams.push({
+        "name": "mode",
+        "value": "async"
+    });
+    asyncProcessing = true;
+}
+
+// To setup auto-fulfillment, create subflows to auto-close domain orders and apply in OOTB DTs leveraging a condition on order external ID
+var externalId = "generated_from_perf_testing_scheduled_script";
+var num = Math.random() * 100;
+if (num <= 50){ // To set 50% of the time
+    externalId = "auto_complete_domain_order_fulfillment";
+}
+
+var randomOffering = tmfPayloadHelper.getRandomValidOffering();
+if (randomOffering){
+	var productOfferingDisplay = queryHelper.getGlideRecordFromSysId("sn_prd_pm_product_offering", randomOffering).getDisplayValue();
+
+    gs.info("Attempting to generate {0} orders for offering {1}. Async order processing: {2}", [quantityOfOrders.toFixed(), productOfferingDisplay, asyncProcessing]);
+	generateProductOrders.generateOrdersFromProductOffering(randomOffering, quantityOfOrders, queryParams, externalId);
+} else {
+	gs.error("No valid product offerings to generate orders with");
+}]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-09 23:08:10</sys_created_on>
+        <sys_id>a74055c947d4021029cb5ac5316d43c6</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>Generate Orders for Performance Testing</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sysauto_script_a74055c947d4021029cb5ac5316d43c6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-09 23:44:41</sys_updated_on>
+        <time_zone>US/Mountain</time_zone>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>
