@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties_category_m2m">
+    <sys_properties_category_m2m action="INSERT_OR_UPDATE">
+        <category display_value="OM Perf Application Properties">bf1315014718021029cb5ac5316d43ba</category>
+        <order>600</order>
+        <property display_value="x_648117_order_man.random_query_max" name="x_648117_order_man.random_query_max">3fd3ec154710021029cb5ac5316d4359</property>
+        <sys_class_name>sys_properties_category_m2m</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-10 14:34:11</sys_created_on>
+        <sys_id>d84420954710021029cb5ac5316d434b</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_648117_order_man.random_query_max.OM Perf Application Properties</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_properties_category_m2m_d84420954710021029cb5ac5316d434b</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-10 14:34:11</sys_updated_on>
+    </sys_properties_category_m2m>
+</record_update>

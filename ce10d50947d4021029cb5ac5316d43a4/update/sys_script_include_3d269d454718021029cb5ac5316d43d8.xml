@@ -12,6 +12,7 @@ TmfPayloadHelper.prototype = {
     initialize: function() {
         this.dataGeneration = new x_648117_order_man.DataGeneration();
         this.queryHelper = new x_648117_order_man.QueryHelper();
+		this.rdmQryMaxCount = gs.getProperty("x_648117_order_man.random_query_max", 200);
     },
 
     /** Get a random published product offering
@@ -21,7 +22,8 @@ TmfPayloadHelper.prototype = {
     getRandomValidOffering: function() {
         var validOfferings = [];
         var offeringGr = new GlideRecord("sn_prd_pm_product_offering");
-        offeringGr.addEncodedQuery("status=published^product_specification.status=published"); 
+        offeringGr.addEncodedQuery("status=published"); 
+		offeringGr.setLimit(this.rdmQryMaxCount);
         offeringGr.query();
         while (offeringGr.next()) {
             validOfferings.push(offeringGr.getUniqueValue());
@@ -41,6 +43,7 @@ TmfPayloadHelper.prototype = {
         var validAccounts = [];
         var accountGr = new GlideRecord("customer_account");
         accountGr.addEncodedQuery("^RLQUERYcustomer_contact.account,>=1^ENDRLQUERY"); // Ensure valid per TMF
+		accountGr.setLimit(this.rdmQryMaxCount);
         accountGr.query();
         while (accountGr.next()) {
             validAccounts.push(accountGr.getUniqueValue());
@@ -61,6 +64,7 @@ TmfPayloadHelper.prototype = {
         var validContacts = [];
         var contactGr = new GlideRecord("customer_contact");
         contactGr.addQuery("account", account);
+		contactGr.setLimit(this.rdmQryMaxCount);
         contactGr.query();
         while (contactGr.next()) {
             validContacts.push(contactGr.getUniqueValue());
@@ -81,6 +85,7 @@ TmfPayloadHelper.prototype = {
         var validLocations = [];
         var locationGr = new GlideRecord("cmn_location");
         locationGr.addQuery("company", account);
+		locationGr.setLimit(this.rdmQryMaxCount);
         locationGr.query();
         while (locationGr.next()) {
             validLocations.push(locationGr.getUniqueValue());
@@ -182,6 +187,7 @@ TmfPayloadHelper.prototype = {
         prdOfferingCharacteristicGr.addQuery("product_offering", productOffering);
         prdOfferingCharacteristicGr.addQuery("specification", productSpecification);
         prdOfferingCharacteristicGr.addQuery("characteristic", characteristic);
+		prdOfferingCharacteristicGr.setLimit(this.rdmQryMaxCount);
         prdOfferingCharacteristicGr.query();
         while (prdOfferingCharacteristicGr.next()) {
             validOptions.push(prdOfferingCharacteristicGr.getElement("characteristic_option.option").toString());
@@ -199,13 +205,13 @@ TmfPayloadHelper.prototype = {
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2024-02-09 23:33:42</sys_created_on>
         <sys_id>3d269d454718021029cb5ac5316d43d8</sys_id>
-        <sys_mod_count>2</sys_mod_count>
+        <sys_mod_count>3</sys_mod_count>
         <sys_name>TmfPayloadHelper</sys_name>
         <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
         <sys_policy/>
         <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
         <sys_update_name>sys_script_include_3d269d454718021029cb5ac5316d43d8</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2024-02-09 23:51:28</sys_updated_on>
+        <sys_updated_on>2024-02-10 14:38:59</sys_updated_on>
     </sys_script_include>
 </record_update>

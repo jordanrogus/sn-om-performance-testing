@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_properties">
+    <sys_properties action="INSERT_OR_UPDATE">
+        <choices/>
+        <description>The max number of records returned by queries to generate random data. Minimizing this number can improve performance by lowering memory usage as every query for random data stores a sys_id to be randomly selected.</description>
+        <ignore_cache>true</ignore_cache>
+        <is_private>false</is_private>
+        <name>x_648117_order_man.random_query_max</name>
+        <read_roles>x_648117_order_man.admin</read_roles>
+        <suffix>random_query_max</suffix>
+        <sys_class_name>sys_properties</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2024-02-10 14:33:57</sys_created_on>
+        <sys_id>3fd3ec154710021029cb5ac5316d4359</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>x_648117_order_man.random_query_max</sys_name>
+        <sys_package display_value="Order Management Performance Testing" source="x_648117_order_man">ce10d50947d4021029cb5ac5316d43a4</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="Order Management Performance Testing">ce10d50947d4021029cb5ac5316d43a4</sys_scope>
+        <sys_update_name>sys_properties_3fd3ec154710021029cb5ac5316d4359</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2024-02-10 14:37:25</sys_updated_on>
+        <type>integer</type>
+        <value>100</value>
+        <write_roles>x_648117_order_man.admin</write_roles>
+    </sys_properties>
+    <sys_translated_text action="delete_multiple" query="documentkey=3fd3ec154710021029cb5ac5316d4359"/>
+</record_update>
